@@ -16,7 +16,7 @@ services:
     ports:
      - '3050:80'
 
-  server:
+  express-server:
     build:
       dockerfile: Dockerfile.dev
       context: ./express-server

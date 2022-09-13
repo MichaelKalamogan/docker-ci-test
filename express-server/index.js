@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const redis = require("redis");
 
 const pgClient = require("./postgres");
 const keys = require("./keys");
@@ -11,13 +12,18 @@ app.use(bodyParser.json());
 
 // redis
 
-const redis = require("redis");
+let redisClient;
 
-const redisClient = redis.createClient({
-  host: keys.redisHost,
-  port: keys.redisPort,
-  retry_strategy: () => 1000,
-});
+(async () => {
+  redisClient = redis.createClient({
+    url: "redis://redis:6379",
+    retry_strategy: () => 1000,
+  });
+
+  redisClient.on("error", (error) => console.error(`Error : ${error}`));
+
+  await redisClient.connect();
+})();
 
 const redisPublisher = redisClient.duplicate();
 
@@ -27,7 +33,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/values/all", async (req, res) => {
-  const values = pgClient.query("SELECT * from values");
+  const values = await pgClient.query("SELECT * from values");
   res.send(values.rows);
 });
 
@@ -39,10 +45,11 @@ app.get("/values/current", async (req, res) => {
 
 app.post("/values", async (req, res) => {
   const index = req.body.index;
+  console.log(index);
   if (parseInt(index) > 50) return res.status(422).send("index too large");
 
-  redisClient.hSet("values", index, "Not calculated yet");
-  redisPublisher.publish("insert", index);
+  await redisClient.HSET("values", index, "Not calculated yet");
+  // await redisPublisher.publish("insert", index);
 
   pgClient.query("INSERT INTO values(number) VALUES($1)", [index]);
 

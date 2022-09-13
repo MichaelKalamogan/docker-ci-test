@@ -27,13 +27,15 @@ export default function Fib() {
   useEffect(() => {
     fetchIndexes();
     fetchValues();
-  }, []);
+  }, [idx]);
 
-  const renderSeenIndexes = () => {
-    return seenIdx.map(({ idx }) => idx).join(",");
+  const RenderSeenIndexes = () => {
+    const str = seenIdx.length > 0 ? seenIdx.join(",") : "nothing yet";
+
+    return <h4>{str}</h4>;
   };
 
-  const renderValues = () => {
+  const RenderValues = () => {
     const entries = [];
 
     for (let key in values) {
@@ -68,9 +70,9 @@ export default function Fib() {
       </form>
 
       <h3>Indexes already calculated</h3>
-      <renderSeenIndexes />
+      <RenderSeenIndexes />
       <h3>Calculated Values</h3>
-      <renderValues />
+      <RenderValues />
     </div>
   );
 }
